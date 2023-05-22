@@ -1,0 +1,360 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/KALLOSBELA_1/Matekninja/1.0.0
+  - description: Local server
+    url: http://localhost:8000
+info:
+  description: Matekninja Express backend 
+  version: "1.0.0"
+  title: Matekninja API
+  contact:
+    email: kallosbela@gmail.com
+    name: Kallós Béla
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: api
+    description: Operations available to regular users
+paths:
+  /api/login:
+    post:
+      tags: 
+        - api
+      summary: Login as a student
+      description: Authenticate a student with their Google login code and return a session token.
+      requestBody:
+        description: The login request containing the student's code.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+      responses:
+        200:
+          description: Successfully authenticated and returned a session token.
+        401:
+          description: Unauthorized, the provided login code is invalid.
+        500:
+          description: Internal server error occurred while processing the login request.
+  /api/user/{id}:
+    put:
+      tags: 
+        - api
+      summary: Update user in the database
+      description: Update user profile data based on the provided user ID and return an updated session token.
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Parameter description in CommonMark or HTML.
+          schema:
+            type : string
+        - name: newProfileData
+          in: query
+          description: The new user profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileData'
+      responses: 
+        200:
+          description: Successfully updated the user and returned a new session token.
+        401:
+          description: Unauthorized, the provided user ID does not match the authenticated user.
+
+    delete:
+      tags:
+        - api
+      summary: Delete user in the database
+      description: Delete the user based on the provided user ID.
+      security: [bearerAuth: []]
+      parameters:
+        - in: path
+          name: id
+          description: The user ID to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successfully deleted the user.
+        401:
+          description: Unauthorized, the provided user ID does not match the authenticated user.
+         
+  /api/tasklists:
+    get:
+      tags:
+        - api
+      summary: Get tasklists for the user's team
+      description: Retrieve all tasklists associated with the authenticated user's team.
+      security: [bearerAuth: []]
+      responses:
+        200:
+          description: Successfully retrieved the tasklists for the user's team.
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/TaskListSchema'
+        401:
+          description: Unauthorized, the user is not authenticated.
+          
+  /api/tasks/mytasks:
+    post:
+      tags:
+       - api
+      summary: Get tasks by task IDs
+      description: Retrieve tasks by providing an array of task IDs.
+      security: [bearerAuth: []]
+      parameters:
+        - in: query
+          name: TaskIds
+          description: An array of task IDs to fetch tasks.
+          schema:
+            type: object
+            required:
+              - taskIds
+            properties:
+              taskIds:
+                type: array
+                items:
+                  type: string
+      responses:
+        200:
+          description: Successfully retrieved tasks based on the provided task IDs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskSchema'  
+        401:
+          description: Unauthorized, the user is not authenticated.
+
+  /api/tasks/{id}:
+    post:
+      tags:
+       - api
+      summary: Get tasks by tasklist ID
+      description: Retrieve tasks associated with the specified tasklist ID.
+      security: [bearerAuth: []]
+      parameters:
+        - in: path
+          name: id
+          description: The tasklist ID
+          required: true
+          schema:
+            type: object
+            required:
+              - taskIds
+            properties:
+              taskIds:
+                type: array
+                items:
+                  type: string
+      responses:
+        200:
+          description: Successfully retrieved tasks based on the provided task IDs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskSchema'  
+        401:
+          description: Unauthorized, the user is not authenticated.
+        404:
+          description: Tasklist not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/solution:
+    post:
+      tags:
+       - api
+      summary: Create a new solution
+      description: Add a new solution to the database.
+      security: [bearerAuth: []]
+      parameters:
+        - in: query
+          name: NewSolution
+          description: The new solution object.
+          schema:
+            type: object
+            properties:
+              solution:
+                $ref: '#/components/schemas/SolutionSchema'
+      responses:
+        200:
+          description: Successfully created the solution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolutionSchema'
+        400:
+          description: Bad request, the solution object is missing or invalid.
+        403:
+          description: Forbidden, the user does not have permission to create the solution.
+        500:
+          description: Internal server error while creating the solution.
+    get:
+      tags:
+        - api
+      summary: Get the user's solutions
+      description: Retrieve all solutions associated with the authenticated user.
+      security: [bearerAuth: []]
+      responses:
+        200:
+          description: Successfully retrieved the user's solutions.
+        500:
+          description: Internal server error while fetching the user's solutions.
+  
+  /api/solution/{id}:
+    delete:
+      tags:
+       - api
+      summary: Delete a solution by ID
+      description: Delete a solution from the database based on the provided solution ID.
+      security: [bearerAuth: []]
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the solution to be deleted.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successfully deleted the solution.
+        400:
+          description: Bad request, the solution ID is missing or invalid.
+        403:
+          description: Forbidden, the user does not have permission to delete the solution.
+        404:
+          description: Solution not found.
+        500:
+          description: Internal server error while deleting the solution.
+
+  /api/statistics:
+    post:
+      tags:
+       - api
+      summary: Get statistics data for a user
+      description: Retrieve statistics data for the authenticated user.
+      security: [bearerAuth: []]
+      parameters:
+        - in: query
+          name: StartEnd
+          description: The start and end dates to filter statistics data.
+          schema:
+            type: object
+            properties:
+              start:
+                type: integer
+                format: int64
+              end:
+                type: integer
+                format: int64
+      responses:
+        200:
+          description: Successfully retrieved the statistics data.
+        204:
+          description: No content, there are no filtered solutions within the specified dates.
+        400:
+          description: Bad request.
+        500:
+          description: Internal server error while deleting the solution.
+         
+components:
+  schemas:
+    UserSchema:
+      type: object
+      description: |-
+        _id: { type: Schema.Types.ObjectId }
+        sub: { type: String, required: true },
+        email: { type: String, required: true },
+        name: { type: String, required: true },
+        picture: { type: String, required: true },
+          role: { type: String, required: true },//student or teacher
+          school: { type: String},
+          team: { type: String},
+    TaskListSchema:
+      type: object
+      description: |-
+        _id: { type: Schema.Types.ObjectId, required: false },
+        name: string,
+        tasks: [{ type: Schema.Types.ObjectId, ref: 'Task' }],
+        sequence: string, 
+        startTime: Date,
+        deadline: Date,
+        team: { type: string },
+        teacher: { type: string } 
+    TaskSchema:
+      type: object
+      description: |-
+        _id: { type: Schema.Types.ObjectId },
+        name: String, 
+        text: String, // "What is the sum of [\frac{2}{5}] and 3?" - Latex format
+        illustration: [String], 
+        listen_text: String, 
+        hints: [String], 
+        answer: [String],
+        score: Number, // 1, 2, 3, 4, 5
+        tags: [String], // topics
+        type: String, // "multiple choice", "one number", "open problem",
+    SolutionSchema:
+      type: object
+      description: |-
+        _id: { type: Schema.Types.ObjectId, required: false },
+        taskId: { type: Schema.Types.ObjectId, ref: 'Task' },
+        taskListId: { type: Schema.Types.ObjectId, ref: 'TaskList' },
+        studentId: { type: Schema.Types.ObjectId, ref: 'Student' },
+        team: String,
+        answer: String,
+        teacherComment: String,
+        points: Number,
+        duringTime: Number,
+        correct: Boolean,
+        checked: Boolean,
+        usedHints: Number,
+        ip: String,
+        date: Number,
+    TeamSchema:
+      type: object
+      description: |-
+        _id: { type: Schema.Types.ObjectId, required: false },
+        name: String,
+        studentEmails: [String],
+    
+    ProfileData:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        school: 
+          type: string
+        team: 
+          type: string  
+  
+  securitySchemes: 
+    bearerAuth: 
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
